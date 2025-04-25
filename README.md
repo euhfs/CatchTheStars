@@ -1,10 +1,13 @@
 **False Positive Warning**
+
 This .exe file was created using PyInstaller, which can sometimes trigger a false positive detection by antivirus programs like Microsoft Defender. This happens because PyInstaller packages the Python code into an executable, and some antivirus software mistakenly flags it as potentially harmful.
 
 **Why This Happens**
+
 When PyInstaller bundles Python applications into .exe files, it includes several components that might resemble the behavior of malware or potentially unwanted applications. As a result, some antivirus programs might wrongly flag it.
 
 **What You Can Do**
+
 If your antivirus (like Microsoft Defender) flags this file, you can safely add it to your antivirus exclusion list to stop the warnings.
 
 **How to Add to Exclusion (Microsoft Defender):**
