@@ -13,14 +13,14 @@ If your antivirus (like Microsoft Defender) flags this file, you can safely add 
 **How to Add to Exclusion (Microsoft Defender):**
 Open Windows Security by clicking on the Start menu, then searching for Windows Security.
 
-1.Click on Virus & Threat Protection.
+1. Click on Virus & Threat Protection.
 
-2.Scroll down and click on Manage Settings under the Virus & Threat Protection Settings section.
+2. Scroll down and click on Manage Settings under the Virus & Threat Protection Settings section.
 
-3.Scroll down to Exclusions and click Add or remove exclusions.
+3. Scroll down to Exclusions and click Add or remove exclusions.
 
-4.Click on Add an exclusion and select File.
+4. Click on Add an exclusion and select File.
 
-5.Choose the .exe file you downloaded to add it to the exclusion list.
+5. Choose the .exe file you downloaded to add it to the exclusion list.
 
 This will prevent your antivirus from flagging the file
