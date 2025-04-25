@@ -23,4 +23,4 @@ Open Windows Security by clicking on the Start menu, then searching for Windows 
 
 5. Choose the .exe file you downloaded to add it to the exclusion list.
 
-This will prevent your antivirus from flagging the file
+This will prevent your antivirus from flagging the file.
