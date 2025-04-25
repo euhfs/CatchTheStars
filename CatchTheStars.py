@@ -26,28 +26,39 @@ os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
 print(f"Saving data to: {DATA_FILE}")
 
 def resource_path(relative_path):
+    """Get the correct path for assets (works in EXE and normal Python)."""
     try:
-        base_path = sys._MEIPASS  # This is set when PyInstaller creates the .exe
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
     except Exception:
-        base_path = os.path.abspath(".")  # If it's not an exe, fall back to the current directory
-    final_path = os.path.join(base_path, relative_path)
-    print(f"Loading resource from: {final_path}")
-    return final_path
+        # If not running as EXE, use the script's directory
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    # Join the base path with the relative asset path
+    full_path = os.path.join(base_path, relative_path)
+    
+    # Debugging: Print where Python is looking for files
+    print(f"Looking for file at: {full_path}")
+    
+    if not os.path.exists(full_path):
+        raise FileNotFoundError(f"ERROR: File not found at {full_path}")
+    
+    return full_path
 
 BOX_WIDTH, BOX_HEIGHT = 65, 45  # dimensions of the box image
 STAR_WIDTH, STAR_HEIGHT = 50, 50  # dimensions of the star image
 
-# Load Assets
-raw_star_img = pygame.image.load(resource_path("assets/star.png"))
+# Load Assets 
+raw_star_img = pygame.image.load(resource_path("star.png"))
 star_img = pygame.transform.scale(raw_star_img, (50, 50))
 
-box_img = pygame.image.load(resource_path("assets/box.png"))
+box_img = pygame.image.load(resource_path("box.png"))
 box_img = pygame.transform.scale(box_img, (65, 45))
 
-background_img = pygame.image.load(resource_path("assets/background.png"))
+background_img = pygame.image.load(resource_path("background.png"))
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 
-pygame.mixer.music.load(resource_path("assets/lofi.mp3"))
+pygame.mixer.music.load(resource_path("lofi.mp3"))
 pygame.mixer.music.set_volume(0.5)
 
 # Default Game State
@@ -80,7 +91,7 @@ def load_user_data():
             username = data.get("username", f"Player{random.randint(1000, 9999)}")
             highscore = data.get("highscore", 0)
 
-load_user_data()  # Load user data when the game starts
+load_user_data()  
 
 def draw_background():
     screen.blit(background_img, (0, 0))
@@ -94,15 +105,20 @@ def draw_stars():
 
 def update_stars():
     global player
+    if player["lives"] <= 0:
+        return  
+    
     player_rect = pygame.Rect(player["x"], player["y"], BOX_WIDTH, BOX_HEIGHT)
-    for s in stars[:]:  # Use a slice to iterate over a copy of the list
+    for s in stars[:]:
         s["y"] += fixed_speed
         star_rect = pygame.Rect(s["x"], s["y"], STAR_WIDTH, STAR_HEIGHT)
 
-        if s["y"] > HEIGHT:  # Star goes off the bottom of the screen
+        if s["y"] > HEIGHT:
+            if player["lives"] > 0: 
+                player["lives"] -= 1
             stars.remove(s)
-            player["lives"] -= 1
-        elif player_rect.colliderect(star_rect):  # Player collects the star
+
+        if player_rect.colliderect(star_rect):
             stars.remove(s)
             player["score"] += 1
 
@@ -142,7 +158,7 @@ def show_leaderboard():
     global highscore
     if player["score"] > highscore:
         highscore = player["score"]
-        save_user_data()  # Save highscore when it changes
+        save_user_data()  
     running = True
     while running:
         screen.fill((20, 20, 40))
@@ -176,7 +192,7 @@ def profile_menu():
                 if e.key == pygame.K_RETURN:
                     if input_text.strip() != "":
                         username = input_text
-                        save_user_data()  # Save new username
+                        save_user_data()  
                     running = False
                 elif e.key == pygame.K_BACKSPACE:
                     input_text = input_text[:-1]
@@ -212,7 +228,7 @@ def menu():
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
                 pygame.quit()
-                return
+                sys.exit()
             elif e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_1:
                     return
@@ -224,10 +240,9 @@ def menu():
                     profile_menu()
 
 # Main Game loop, game over screen with highscore check
-# Main Game loop, game over screen with highscore check
 def game_over_screen():
-    global player, highscore  # Access player and highscore
-    screen.fill((0, 0, 0))  # Make background black for game over
+    global player, highscore  
+    screen.fill((0, 0, 0))  
 
     # Title - Game Over
     game_over_font = pygame.font.SysFont("arial", 50)  
@@ -249,7 +264,7 @@ def game_over_screen():
     # Update highscore if player's score is higher
     if player["score"] > highscore:
         highscore = player["score"]
-        save_user_data()  # Save highscore when it changes
+        save_user_data()  
 
     pygame.display.flip()
 
@@ -261,40 +276,50 @@ def game_over_screen():
                 return
             elif e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_ESCAPE:
-                    pygame.quit()  # Exit the game
+                    pygame.quit()  
                     return
                 elif e.key == pygame.K_m:
                     player["score"] = 0
                     player["lives"] = 10
                     stars.clear()
-                    menu()  # Go back to the main menu
-                    return  # Stop the game over loop
+                    menu() 
+                    return  
 
-menu()  # Display the main menu
+# Display the main menu
+menu()  
 run = True
+game_over = False  
+
 while run:
     clock.tick(60)
     draw_background()
     
-    current_time = pygame.time.get_ticks()
-    if current_time - last_spawn_time >= spawn_interval and len(stars) < MAX_STARS:
-        stars.append({"x": random.randint(0, WIDTH - STAR_WIDTH), "y": 0, "speed": random.randint(3, 6)})
-        last_spawn_time = current_time
+    if not game_over: 
+        current_time = pygame.time.get_ticks()
+        if current_time - last_spawn_time >= spawn_interval and len(stars) < MAX_STARS:
+            stars.append({"x": random.randint(0, WIDTH - STAR_WIDTH), "y": 0, "speed": random.randint(3, 6)})
+            last_spawn_time = current_time
 
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        player["x"] -= player["speed"]
-    if keys[pygame.K_RIGHT]:
-        player["x"] += player["speed"]
-    player["x"] = max(0, min(player["x"], WIDTH - 80))
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            player["x"] -= player["speed"]
+        if keys[pygame.K_RIGHT]:
+            player["x"] += player["speed"]
+        player["x"] = max(0, min(player["x"], WIDTH - 80))
 
-    update_stars()
-    draw_stars()
-    draw_player()
-    draw_hud()
+        update_stars()
+        draw_stars()
+        draw_player()
+        draw_hud()
 
-    if player["lives"] <= 0:
-        game_over_screen()
+        if player["lives"] <= 0:
+            game_over = True
+            game_over_screen()
+            # Reset game state
+            player["score"] = 0
+            player["lives"] = 10
+            stars.clear()
+            game_over = False  
 
     pygame.display.flip()
 
@@ -304,6 +329,3 @@ while run:
         elif e.type == pygame.KEYDOWN:
             if e.key == pygame.K_ESCAPE:
                 run = False
-
-pygame.quit()
-sys.exit()
